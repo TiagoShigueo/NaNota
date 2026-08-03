@@ -25,3 +25,5 @@ Ideia inicial do jogo é lidar com notas do violino
 > Nível 5
 > - Nível 1, 2, 3 e 4
 > - Notas dedo 4
+
+Também pensar nas escalas [começar com Ré Maior] e futuramente nas claves
