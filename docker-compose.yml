@@ -1,19 +1,52 @@
-
+version: '3.8'
 
 services:
+  # 1. Serviço do Banco de Dados MySQL
   mysql-db:
     image: mysql:8.0
     container_name: nanota-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: nanota_root_password
-      MYSQL_DATABASE: nanota_db
-      MYSQL_USER: nanota_user
-      MYSQL_PASSWORD: nanota_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "3307:3306"
+      - "${MYSQL_PORT_HOST}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:                     # <-- ADICIONADO AQUI
+      - nanota-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2. Serviço da API Spring Boot
+  backend:
+    build: ./backend
+    container_name: nanota-api
+    restart: always
+    ports:
+      - "${API_PORT_HOST}:8080"
+    environment:
+      # Corrigido para a porta interna 3306
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/nanota_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    # depends_on:
+      #- mysql-db
+    depends_on:
+      # ATUALIZE AQUI:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - nanota-network
 
 volumes:
   mysql_data:
+
+networks:
+  nanota-network:
+    driver: bridge
